@@ -27,34 +27,33 @@ class LinkParser(HTMLParser):
                     # We combine a relative URL with the base URL to create
                     # an absolute URL like:
                     # www.netinstructions.com/somepage.html
-                    print("base: {0}, value: {1}".format(self.baseUrl, value))
                     newUrl = parse.urljoin(self.baseUrl, value)
-                    print("and finally... {0}".format(newUrl))
+                    print("\nbase: {0}, value: {1}, result: {2}".format(self.baseUrl, value, newUrl))
                     # And add it to our colection of links:
                     self.links = self.links + [newUrl]
         elif tag == 'form':
             for (key, value) in attrs:
                 if key == 'action':
                     newUrl = parse.urljoin(self.baseUrl, value)
-                    print("form? {0}".format(newUrl))
+                    print("form action: {0}".format(newUrl))
                     self.links = self.links + [newUrl]
 
     # This is a new function that we are creating to get links
     # that our spider() function will call
     def getLinks(self, url):
-        print("here")
         self.links = []
         # Remember the base URL which will be important when creating
         # absolute URLs
         self.baseUrl = url
         # Use the urlopen function from the standard Python 3 library
         response = urlopen(url)
-        print(response)
         # Make sure that we are looking at HTML and not other things that
         # are floating around on the internet (such as
         # JavaScript files, CSS, or .PDFs for example)
-        print(response.getheader('Content-Type'))
-        print(response.getheaders())
+        print("## Headers")
+        for k, v in response.getheaders():
+            print("- {0}: {1}".format(k, v))
+
         if response.getheader('Content-Type').startswith('text/html'):
             htmlBytes = response.read()
             # Note that feed() handles Strings well, but not bytes
@@ -73,7 +72,13 @@ def samescope(u0, u1):
     except:
         return False
 
-def spider(url, maxPages, restrictScope=True):
+def addUniqueParams(u0, uniqueParams):
+    if uniqueParams:
+        return u0
+    else:
+        return u0.split("?", 1)[0]
+
+def spider(url, maxPages, restrictScope=True, noUniqueParams=True):
     pagesToVisit = [url]
     numberVisited = 0
     seen = set()
@@ -83,7 +88,7 @@ def spider(url, maxPages, restrictScope=True):
         url = pagesToVisit[0]
         pagesToVisit = pagesToVisit[1:]
         try:
-            print(numberVisited, "Visiting:", url)
+            print("\n#",numberVisited, "Visiting:", url)
             parser = LinkParser()
             data, links = parser.getLinks(url)
 
@@ -92,22 +97,30 @@ def spider(url, maxPages, restrictScope=True):
                 if link in seen:
                     continue
 
+                seen.add(link)
+
+                if noUniqueParams:
+                    link = link.split("?", 1)[0]
+                    seen.add(link)
+
                 if restrictScope:
                     if samescope(link, url):
                         pagesToVisit.append(link)
                 else:
                     pagesToVisit.append(link)
 
-                seen.add(link)
 
-            #print(data)
-            print(pagesToVisit)
-            print(" **Success!**")
+            # print(data)
+            # print(pagesToVisit)
+            # print(" **Success!**")
         except Exception as e:
             print(e)
-            print(" **Failed!**")
+            #print(" **Failed!**")
 
-    print(seen)
+    print("## Links Seen:")
+    for item in seen:
+        print("- {0}".format(item))
+    #print(seen)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -116,3 +129,4 @@ if __name__ == "__main__":
 
     for arg in sys.argv[1:]:
         spider(arg, 10)
+        print("# End {0}\n-----".format(arg))
