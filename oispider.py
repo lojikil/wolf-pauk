@@ -101,6 +101,10 @@ def spider(url, maxPages, restrictScope=True, noUniqueParams=True):
 
                 if noUniqueParams:
                     link = link.split("?", 1)[0]
+
+                    if link in seen:
+                        continue
+
                     seen.add(link)
 
                 if restrictScope:
