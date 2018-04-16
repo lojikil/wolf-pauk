@@ -119,23 +119,51 @@ def spider(url, max_pages, restrict_scope=True, no_unique_params=True):
                 else:
                     pages_to_visit.append(link)
 
-            # print(data)
-            # print(pagesToVisit)
-            # print(" **Success!**")
         except Exception as e:
             print(e)
-            # print(" **Failed!**")
 
     print("## Links Seen:")
     for item in seen:
         print("- {0}".format(item))
-    # print(seen)
+
 
 if __name__ == "__main__":
+
+    restrict_directories = False
+    restrict_scope = True
+    restrict_params = True
+
     if len(sys.argv) < 2:
-        print("usage: oispider [url(s)]")
+        print("usage: wolf_pauk [-dDpPsS] [url(s)]")
+        print("""
+    d/D: lower-case "d" to include any directories on the site (default),
+         uppercase "D" to restrict the prefix to the original directory
+    p/P: lower-case "p" for disabling unique parameters (default),
+         uppercase "P" for including
+    s/S: low case "s" to restrict scope to same site (default),
+         uppercase "S" to include any links.
+    note that args can be interleaved within URLs for different options
+    per site """)
         sys.exit(0)
 
     for arg in sys.argv[1:]:
-        spider(arg, 100)
+        if arg[0] == "-":
+            for a in arg[1:]:
+                # d/D are swapped from the other two...
+                if a == "d":
+                    restrict_directories = False
+                elif a == 'D':
+                    restrict_directories = True
+                elif a == 'p':
+                    restrict_params = True
+                elif a == 'P':
+                    restrict_params = False
+                elif a == 's':
+                    restrict_scope = True
+                elif a == 'S':
+                    retrict_scope = False
+
+        spider(arg, 100,
+               restrict_scope=restrict_scope,
+               no_unique_params=restrict_params)
         print("# End {0}\n-----".format(arg))
