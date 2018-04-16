@@ -93,25 +93,25 @@ def spider(url, max_pages, restrict_scope=True, no_unique_params=True):
         number_visited = number_visited + 1
         url = pages_to_visit[0]
         pages_to_visit = pages_to_visit[1:]
+
         try:
             print("\n#", number_visited, "Visiting:", url)
             parser = LinkParser()
             data, links = parser.get_links(url)
+            seen.add(url)
 
             for link in links:
 
                 if link in seen:
                     continue
 
-                seen.add(link)
-
                 if no_unique_params:
                     link = link.split("?", 1)[0]
-
                     if link in seen:
                         continue
 
-                    seen.add(link)
+                if link in pages_to_visit:
+                    continue
 
                 if restrict_scope:
                     if samescope(link, url):
@@ -137,5 +137,5 @@ if __name__ == "__main__":
         sys.exit(0)
 
     for arg in sys.argv[1:]:
-        spider(arg, 10)
+        spider(arg, 100)
         print("# End {0}\n-----".format(arg))
