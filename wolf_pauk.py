@@ -3,6 +3,7 @@ from urllib.request import urlopen
 from urllib import parse
 import sys
 
+
 # initial from here:
 # http://www.netinstructions.com/how-to-make-a-web-crawler-in-under-50-lines-of-python-code/
 # but some parts ripped apart. Honestly works pretty well...
@@ -27,24 +28,26 @@ class LinkParser(HTMLParser):
                     # We combine a relative URL with the base URL to create
                     # an absolute URL like:
                     # www.netinstructions.com/somepage.html
-                    newUrl = parse.urljoin(self.baseUrl, value)
-                    print("\nbase: {0}, value: {1}, result: {2}".format(self.baseUrl, value, newUrl))
+                    newurl = parse.urljoin(self.baseurl, value)
+                    print("\nbase: {0}, value: {1}".format(self.baseurl,
+                                                           value))
+                    print("result: {0}".format(newurl))
                     # And add it to our colection of links:
-                    self.links = self.links + [newUrl]
+                    self.links = self.links + [newurl]
         elif tag == 'form':
             for (key, value) in attrs:
                 if key == 'action':
-                    newUrl = parse.urljoin(self.baseUrl, value)
-                    print("form action: {0}".format(newUrl))
-                    self.links = self.links + [newUrl]
+                    newurl = parse.urljoin(self.baseUrl, value)
+                    print("form action: {0}".format(newurl))
+                    self.links = self.links + [newurl]
 
     # This is a new function that we are creating to get links
     # that our spider() function will call
-    def getLinks(self, url):
+    def get_links(self, url):
         self.links = []
         # Remember the base URL which will be important when creating
         # absolute URLs
-        self.baseUrl = url
+        self.baseurl = url
         # Use the urlopen function from the standard Python 3 library
         response = urlopen(url)
         # Make sure that we are looking at HTML and not other things that
@@ -55,14 +58,15 @@ class LinkParser(HTMLParser):
             print("- {0}: {1}".format(k, v))
 
         if response.getheader('Content-Type').startswith('text/html'):
-            htmlBytes = response.read()
+            htmlbytes = response.read()
             # Note that feed() handles Strings well, but not bytes
             # (A change from Python 2.x to Python 3.x)
-            htmlString = htmlBytes.decode("utf-8")
-            self.feed(htmlString)
-            return htmlString, self.links
+            htmlstring = htmlbytes.decode("utf-8")
+            self.feed(htmlstring)
+            return htmlstring, self.links
         else:
-            return "",[]
+            return "", []
+
 
 def samescope(u0, u1):
     try:
@@ -72,25 +76,27 @@ def samescope(u0, u1):
     except:
         return False
 
-def addUniqueParams(u0, uniqueParams):
-    if uniqueParams:
+
+def add_unique_params(u0, unique_params):
+    if unique_params:
         return u0
     else:
         return u0.split("?", 1)[0]
 
-def spider(url, maxPages, restrictScope=True, noUniqueParams=True):
-    pagesToVisit = [url]
-    numberVisited = 0
+
+def spider(url, max_pages, restrict_scope=True, no_unique_params=True):
+    pages_to_visit = [url]
+    number_visited = 0
     seen = set()
 
-    while pagesToVisit != []:
-        numberVisited = numberVisited +1
-        url = pagesToVisit[0]
-        pagesToVisit = pagesToVisit[1:]
+    while pages_to_visit != []:
+        number_visited = number_visited + 1
+        url = pages_to_visit[0]
+        pages_to_visit = pages_to_visit[1:]
         try:
-            print("\n#",numberVisited, "Visiting:", url)
+            print("\n#", number_visited, "Visiting:", url)
             parser = LinkParser()
-            data, links = parser.getLinks(url)
+            data, links = parser.get_links(url)
 
             for link in links:
 
@@ -99,7 +105,7 @@ def spider(url, maxPages, restrictScope=True, noUniqueParams=True):
 
                 seen.add(link)
 
-                if noUniqueParams:
+                if no_unique_params:
                     link = link.split("?", 1)[0]
 
                     if link in seen:
@@ -107,24 +113,23 @@ def spider(url, maxPages, restrictScope=True, noUniqueParams=True):
 
                     seen.add(link)
 
-                if restrictScope:
+                if restrict_scope:
                     if samescope(link, url):
-                        pagesToVisit.append(link)
+                        pages_to_visit.append(link)
                 else:
-                    pagesToVisit.append(link)
-
+                    pages_to_visit.append(link)
 
             # print(data)
             # print(pagesToVisit)
             # print(" **Success!**")
         except Exception as e:
             print(e)
-            #print(" **Failed!**")
+            # print(" **Failed!**")
 
     print("## Links Seen:")
     for item in seen:
         print("- {0}".format(item))
-    #print(seen)
+    # print(seen)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
